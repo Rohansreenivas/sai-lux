@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sai Lux | Elevated Living in Bangalore</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <style>
+        body { font-family: 'Montserrat', sans-serif; background-color: #0f1715; color: #f0f0f0; scroll-behavior: smooth; overflow-x: hidden; width: 100%; }
+        h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
+        nav { backdrop-filter: blur(15px); background-color: rgba(15, 23, 21, 0.9); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        
+        .hero-banner {
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(15, 23, 21, 1)), 
+                        url('https://images.unsplash.com/photo-1590644365607-1c5a519a7a37?auto=format&fit=crop&q=80&w=1920');
+            background-size: cover; background-position: center;
+            height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding-top: 60px; 
+        }
+        
+        .accent-color { color: #d4a373; } 
+        .page-container { transition: opacity 0.6s ease-in-out; width: 100%; }
+        .hidden-section { display: none; opacity: 0; }
+        .active-section { display: block; animation: fadeIn 0.8s forwards; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .review-track { display: flex; width: max-content; animation: scroll 55s linear infinite; }
+        .review-track:hover { animation-play-state: paused; }
+        
+        /* Interactive Cursor Glow Cards */
+        .amenity-card, .glow-card { 
+            position: relative;
+            background: rgba(255, 255, 255, 0.03); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            transition: background 0.4s ease, border-color 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease; 
+            overflow: hidden;
+        }
+        .amenity-card {
+            min-height: 280px; display: flex; flex-direction: column; justify-content: center;
+        }
+        
+        /* Glow Effect Pseudo-element */
+        .amenity-card::before, .glow-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(
+                400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(212, 163, 115, 0.12),
+                transparent 80%
+            );
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .amenity-card:hover::before, .glow-card:hover::before { opacity: 1; }
+        .amenity-card:hover, .glow-card:hover { 
+            border-color: rgba(212, 163, 115, 0.4); 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 30px -15px rgba(212, 163, 115, 0.3);
+        }
+        
+        .amenity-card > *, .glow-card > * { position: relative; z-index: 2; }
+        
+        .dropdown:hover .dropdown-menu { display: block; animation: fadeIn 0.3s forwards; }
+        .dropdown-menu { display: none; background: #0f1715; border: 1px solid rgba(212, 163, 115, 0.2); }
+
+        .iti { width: 100%; }
+        .iti__country-list { background-color: #0f1715; border: 1px solid #d4a373; color: white; border-radius: 10px; z-index: 100; }
+        .iti__country:hover { background-color: #d4a373; }
+        
+        .gallery-img { height: 260px; width: 100%; object-fit: cover; border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.1); transition: transform 0.6s ease; }
+        @media (min-width: 768px) { .gallery-img { height: 500px; border-radius: 2rem; } }
+        .gallery-img:hover { transform: scale(1.02); }
+
+        #successPopup { transition: opacity 0.5s ease, visibility 0.5s; }
+        .lux-card {
+            background: rgba(15, 23, 21, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 163, 115, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        input[type="date"] { color-scheme: dark; }
+        select option { background-color: #0f1715; color: white; }
+
+        .reveal-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-on-scroll.is-visible { opacity: 1; transform: translateY(0); }
+
+        /* --- NEW PERFECTED STROKE SUNRISE PRELOADER COMPONENT --- */
+        #sunrise-preloader {
+            position: fixed; inset: 0; z-index: 200; background-color: #080d0c;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden;
+            transition: opacity 0.8s cubic-bezier(0.77, 0, 0.175, 1), filter 0.8s ease;
+        }
+
+        .sky-viewport {
+            position: relative; width: 100%; height: 450px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .sun-strokes {
+            position: absolute; width: 160px; height: 160px; top: 15px; z-index: 4;
+            opacity: 0; transform: scale(0.8);
+            animation: strokesReveal 1.2s ease-out forwards 0.8s;
+        }
+
+        @keyframes strokesReveal {
+            to { opacity: 0.8; transform: scale(1); }
+        }
+
+        .half-sun-slice {
+            position: absolute; width: 110px; height: 55px; top: 110px; z-index: 5;
+            background: linear-gradient(180deg, #ffffff 0%, #ffbe76 50%, #c2410c 100%);
+            border-top-left-radius: 110px; border-top-right-radius: 110px; opacity: 0;
+            transform: translateY(120px);
+            animation: finalSunRise 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards 0.2s;
+        }
+
+        @keyframes finalSunRise {
+            0% { transform: translateY(120px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; filter: drop-shadow(0 0 40px rgba(255, 190, 118, 0.5)); }
+        }
+
+        .horizon-group { position: absolute; top: 165px; width: 280px; z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .main-horizon { width: 100%; height: 1.5px; background: linear-gradient(90deg, transparent, #d4a373, transparent); opacity: 0; animation: horizonFade 1s forwards 0.5s; }
+        .reflection-line { width: 60%; height: 0.5px; background: rgba(212, 163, 115, 0.4); opacity: 0; animation: horizonFade 1s forwards 0.7s; }
+
+        @keyframes horizonFade { to { opacity: 1; } }
+
+        .text-stack { position: relative; z-index: 20; text-align: center; margin-top: 110px; }
+        .solar-brand-text { opacity: 0; transform: translateY(10px); animation: textDawnReveal 0.9s forwards 0.8s; }
+        .solar-tagline { opacity: 0; letter-spacing: 0.3em; animation: taglineDawnReveal 1.1s forwards 1.2s; }
+
+        @keyframes textDawnReveal { to { opacity: 1; transform: translateY(0); } }
+        @keyframes taglineDawnReveal { to { opacity: 0.5; letter-spacing: 0.7em; } }
+    </style>
+</head>
+<body class="opacity-0 transition-opacity duration-300">
+
+    <!-- INTEGRATED PERFECTED SUNRISE PRELOADER -->
+    <div id="sunrise-preloader">
+        <div class="sky-viewport">
+            <svg class="sun-strokes" viewBox="0 0 100 100">
+                <line x1="50" y1="59" x2="50" y2="35" stroke="#d4a373" stroke-width="1.2" stroke-linecap="round" />
+                <line x1="35" y1="65" x2="15" y2="45" stroke="#d4a373" stroke-width="1.2" stroke-linecap="round" />
+                <line x1="65" y1="65" x2="85" y2="45" stroke="#d4a373" stroke-width="1.2" stroke-linecap="round" />
+                <line x1="25" y1="80" x2="5" y2="70" stroke="#d4a373" stroke-width="1.2" stroke-linecap="round" />
+                <line x1="75" y1="80" x2="95" y2="70" stroke="#d4a373" stroke-width="1.2" stroke-linecap="round" />
+            </svg>
+            <div class="half-sun-slice"></div>
+            <div class="horizon-group">
+                <div class="main-horizon"></div>
+                <div class="reflection-line"></div>
+                <div class="reflection-line" style="width: 40%; opacity: 0.2;"></div>
+            </div>
+            <div class="text-stack">
+                <h1 class="solar-brand-text text-4xl md:text-6xl font-light uppercase tracking-[0.2em] text-white">
+                    SAI <span class="accent-color font-serif font-bold italic normal-case">L</span>UX
+                </h1>
+                <div class="w-8 h-[1px] bg-[#d4a373]/20 mx-auto my-3"></div>
+                <p class="solar-tagline text-[9px] uppercase tracking-[0.5em] text-gray-400">SUNRISE LIVING</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN NAVBAR NAVIGATION -->
+    <nav class="fixed w-full z-50 flex justify-between items-center px-4 md:px-20 py-4">
+        <a href="javascript:void(0)" onclick="showPage('home')" class="flex items-center">
+            <span class="text-white font-bold tracking-widest text-base md:text-xl font-[Playfair Display]">SAI LUX</span>
+        </a>
+        
+        <div class="hidden lg:flex space-x-10 text-[11px] uppercase tracking-[0.4em] font-semibold opacity-80 items-center">
+            <a href="javascript:void(0)" onclick="showPage('home')" class="hover:text-white transition">Home</a>
+            <div class="relative dropdown">
+                <a href="javascript:void(0)" class="hover:text-white transition flex items-center">Suites <span class="ml-2 text-[8px]">▼</span></a>
+                <div class="dropdown-menu absolute top-full left-0 w-48 py-4 shadow-xl rounded-b-xl border-t border-[#d4a373]">
+                    <a href="javascript:void(0)" onclick="showSuite('1bhk')" class="block px-6 py-2 hover:text-[#d4a373] transition">1 BHK</a>
+                    <a href="javascript:void(0)" onclick="showSuite('2bhk')" class="block px-6 py-2 hover:text-[#d4a373] transition">2 BHK</a>
+                </div>
+            </div>
+            <a href="javascript:void(0)" onclick="showPage('amenities')" class="hover:text-white transition">Amenities</a>
+            <a href="javascript:void(0)" onclick="showPage('why-us')" class="hover:text-white transition">Why Us</a>
+            <a href="javascript:void(0)" onclick="showPage('contact')" class="hover:text-white transition">Contact</a>
+        </div>
+
+        <div class="flex items-center space-x-2 md:space-x-4">
+            <button onclick="startRazorpayPayment()" class="bg-[#d4a373] hover:bg-[#bfa285] text-[#0f1715] px-3 md:px-5 py-2 text-[10px] uppercase tracking-widest rounded-full font-bold shadow-lg transition">Pay</button>
+            <button onclick="showPage('contact')" class="bg-[#c2410c] hover:bg-[#a1340a] text-white px-3 md:px-5 py-2 text-[10px] uppercase tracking-widest rounded-full font-bold shadow-lg transition">Book</button>
+            <button onclick="toggleMobileMenu()" class="lg:hidden text-white text-2xl p-2 focus:outline-none">☰</button>
+        </div>
+    </nav>
+
+    <!-- MOBILE OVERLAY MENU (FIXED TO ADJUST OVERFLOW & LAYOUT JUMPING) -->
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#0f1715] hidden flex-col items-center justify-center space-y-6 text-center p-6 overflow-y-auto w-full h-full">
+        <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 text-3xl focus:outline-none text-white p-2">✕</button>
+        <a href="javascript:void(0)" onclick="toggleMobileMenu(); showPage('home')" class="text-lg tracking-[0.3em] uppercase block py-2 text-white">Home</a>
+        <div class="w-full border-t border-b border-white/5 py-2">
+            <button onclick="toggleMobileSubmenu()" class="text-lg tracking-[0.3em] uppercase py-2 flex items-center justify-center w-full focus:outline-none text-white">
+                Suites <span id="submenu-arrow" class="ml-3 text-[10px] transition-transform duration-300">▼</span>
+            </button>
+            <div id="mobile-submenu" class="hidden flex-col bg-white/5 mt-2 py-3 space-y-4 rounded-xl border border-white/5 mx-auto max-w-[240px]">
+                <a href="javascript:void(0)" onclick="toggleMobileMenu(); showSuite('1bhk')" class="text-base tracking-[0.2em] uppercase opacity-80 text-white block py-1">1 BHK Suite</a>
+                <a href="javascript:void(0)" onclick="toggleMobileMenu(); showSuite('2bhk')" class="text-base tracking-[0.2em] uppercase opacity-80 text-white block py-1">2 BHK Suite</a>
+            </div>
+        </div>
+        <a href="javascript:void(0)" onclick="toggleMobileMenu(); showPage('amenities')" class="text-lg tracking-[0.3em] uppercase block py-2 text-white">Amenities</a>
+        <a href="javascript:void(0)" onclick="toggleMobileMenu(); showPage('why-us')" class="text-lg tracking-[0.3em] uppercase block py-2 text-white">Why Us</a>
+        <a href="javascript:void(0)" onclick="toggleMobileMenu(); showPage('contact')" class="text-lg tracking-[0.3em] uppercase block py-2 text-white">Contact</a>
+    </div>
+
+    <!-- HOME INTERACTIVE COMPONENT SECTION -->
+    <div id="home-page" class="active-section page-container pt-20">
+        <section class="hero-banner relative text-center px-4">
+            <div class="z-10 w-full max-w-4xl mx-auto">
+                <h1 class="text-5xl md:text-[7.5rem] font-bold text-white leading-tight mb-4 md:mb-6">Elevated <br> Living.</h1>
+                <div class="w-12 h-0.5 bg-[#d4a373] mx-auto mb-6 md:mb-8"></div>
+                <p class="text-[10px] md:text-sm font-light tracking-[0.3em] uppercase mb-8 md:mb-10 opacity-70">Bespoke residences for the discerning traveler.</p>
+                <button onclick="showSuite('1bhk')" class="border border-[#d4a373] text-[#d4a373] hover:bg-[#d4a373] hover:text-[#0f1715] rounded-full px-6 md:px-8 py-3 text-[9px] uppercase tracking-[0.3em] font-bold transition">Explore Suites</button>
+            </div>
+        </section>
+
+        <section class="py-12 md:py-16 px-4 md:px-20 max-w-7xl mx-auto reveal-on-scroll">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 items-stretch bg-[#0a100f] overflow-hidden rounded-[1.5rem] md:rounded-[2rem] border border-white/5 shadow-2xl">
+                <div class="h-[240px] md:h-auto"><img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=1000" class="w-full h-full object-cover" alt="Bangalore Estate"></div>
+                <div class="p-6 md:p-20 flex flex-col justify-center space-y-4 md:space-y-6">
+                    <span class="text-[10px] uppercase tracking-[0.5em] accent-color font-bold">Urban Serenity</span>
+                    <h2 class="text-3xl md:text-6xl font-bold leading-tight">The Garden City <br> Reimagined.</h2>
+                    <p class="text-gray-400 leading-relaxed text-sm md:text-base font-light">Tucked away from the silicon pulse, Sai Lux brings the lush canopy of Bangalore into your living space, minutes away from Manipal Hospital.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-12 md:py-16 bg-[#0a100f] overflow-hidden border-y border-white/5 reveal-on-scroll">
+            <div class="review-track">
+                <div class="w-[290px] md:w-[480px] bg-white/5 p-5 md:p-10 rounded-2xl md:rounded-3xl mx-3 md:mx-4 border border-white/5 text-white flex flex-col justify-between">
+                    <p class="text-xs md:text-base font-light italic mb-4 md:mb-6">"I stayed here for three weeks while receiving medical care at Manipal Hospital. Having a fully functional kitchen and an in-house washing machine made my recovery incredibly smooth and stress-free. The 24/7 security gave my family complete peace of mind."</p>
+                    <span class="text-[9px] md:text-[10px] uppercase tracking-widest accent-color font-bold">Anand Verma, Raipur</span>
+                </div>
+                <div class="w-[290px] md:w-[480px] bg-white/5 p-5 md:p-10 rounded-2xl md:rounded-3xl mx-3 md:mx-4 border border-white/5 text-white flex flex-col justify-between">
+                    <p class="text-xs md:text-base font-light italic mb-4 md:mb-6">"Unmatched convenience if you are visiting for medical tourism. Manipal Hospital is literally a 2-minute walk away. The building is highly accessible, quiet, and the staff treated us with immense warmth. Far better and more private than staying at a hotel."</p>
+                    <span class="text-[9px] md:text-[10px] uppercase tracking-widest accent-color font-bold">Chisomo Kumwenda, UK</span>
+                </div>
+                <div class="w-[290px] md:w-[480px] bg-white/5 p-5 md:p-10 rounded-2xl md:rounded-3xl mx-3 md:mx-4 border border-white/5 text-white flex flex-col justify-between">
+                    <p class="text-xs md:text-base font-light italic mb-4 md:mb-6">"We used their private travel service during our stay, and it was absolutely amazing! The cabs were always pristine, safe, and right on time. The staff went above and beyond to make sure our daily trips across Bangalore were completely stress-free. Exceptional hospitality!"</p>
+                    <span class="text-[9px] md:text-[10px] uppercase tracking-widest accent-color font-bold">Arjun & Priya Sharma, New Delhi</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- SUITES COMPONENT SECTION -->
+    <div id="suites-page" class="hidden-section page-container py-16 md:py-24 px-4 md:px-10 max-w-7xl mx-auto">
+        <div id="display-1bhk" class="hidden space-y-12 md:space-y-24">
+            <div class="text-center reveal-on-scroll">
+                <span class="text-[10px] uppercase tracking-[0.5em] accent-color font-bold mb-2 md:mb-4 block">1 BHK Executive Suite</span>
+                <h2 class="text-3xl md:text-7xl font-bold uppercase tracking-tighter">Your Private Sanctuary</h2>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-16 items-center reveal-on-scroll">
+                <img src="https://images.unsplash.com/photo-1630699144339-420f59b4747b?auto=format&fit=crop&q=80&w=1200" class="gallery-img" alt="Master Bedroom">
+                <div class="space-y-2 md:space-y-4">
+                    <h3 class="text-xl md:text-3xl font-bold accent-color">Master Bedroom</h3>
+                    <p class="text-gray-400 font-light text-sm md:text-base">Premium linens, customized ambient lighting configurations, and double-glazed windows offer absolute peace from the bustling city outside.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-16 items-center pt-4 md:pt-10 reveal-on-scroll">
+                <div class="space-y-2 md:space-y-4 order-2 lg:order-1">
+                    <h3 class="text-xl md:text-3xl font-bold accent-color">Executive Living Space</h3>
+                    <p class="text-gray-400 font-light text-sm md:text-base">A curated, multi-use lounge space featuring ergonomic workstation arrangements, high-speed routing connectivity, and elegant contemporary design architecture.</p>
+                </div>
+                <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=1200" class="gallery-img order-1 lg:order-2" alt="Executive Living Space">
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-16 items-center pt-4 md:pt-10 reveal-on-scroll">
+                <img src="https://images.unsplash.com/photo-1556912173-3bb406ef7e77?auto=format&fit=crop&q=80&w=1200" class="gallery-img" alt="Equipped Kitchen">
+                <div class="space-y-2 md:space-y-4">
+                    <h3 class="text-xl md:text-3xl font-bold accent-color">Fully Appointed Kitchen</h3>
+                    <p class="text-gray-400 font-light text-sm md:text-base">Sleek open layout configured with modern appliances, a safety chimney, and premium dinnerware suited for effortless meal preparation.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-16 items-center pt-4 md:pt-10 reveal-on-scroll">
+                <div class="space-y-2 md:space-y-4 order-2 lg:order-1">
+                    <h3 class="text-xl md:text-3xl font-bold accent-color">En-Suite Bathroom</h3>
+                    <p class="text-gray-400 font-light text-sm md:text-base">A pristine, highly hygienic setup outfitted with heavy-duty rapid heating geysers, glass features, and high-pressure modern fixtures.</p>
+                </div>
+                <img src="https://images.unsplash.com/photo-1620626011161-997c51447343?auto=format&fit=crop&q=80&w=1200" class="gallery-img order-1 lg:order-2" alt="Luxury Bathroom">
+            </div>
+        </div>
+
+        <div id="display-2bhk" class="hidden space-y-12 md:space-y-24">
+            <div class="text-center reveal-on-scroll">
+                <span class="text-[10px] uppercase tracking-[0.5em] accent-color font-bold mb-2 md:mb-4 block">2 BHK Grand Suite</span>
+                <h2 class="text-3xl md:text-7xl font-bold uppercase tracking-tighter">Space for the Family</h2>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-16 items-center reveal-on-scroll">
+                <div class="grid grid-cols-2 gap-2 md:gap-4">
+                    <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=800" class="h-[160px] md:h-[500px] w-full object-cover rounded-xl md:rounded-2xl" alt="Primary Bedroom">
+                    <img src="https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=800" class="h-[160px] md:h-[500px] w-full object-cover rounded-xl md:rounded-2xl" alt="Secondary Bedroom">
+                </div>
+                <div class="space-y-2 md:space-y-4">
+                    <h3 class="text-xl md:text-3xl font-bold accent-color">Dual Master Bedrooms</h3>
+                    <p class="text-gray-400 font-light text-sm md:text-base">Two king-sized primary sanctuaries designed independently to secure complete family privacy without sacrificing communal comfort elements.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-16 items-center pt-4 md:pt-10 reveal-on-scroll">
+                <div class="space-y-2 md:space-y-4 order-2 lg:order-1">
+                    <h3 class="text-xl md:text-3xl font-bold accent-color">Grand Family Lounge</h3>
+                    <p class="text-gray-400 font-light text-sm md:text-base">Spacious, open-concept gathering hall fitted with high-end designer seating arrangements, soft carpeting, and custom architecture perfect for shared entertainment.</p>
+                </div>
+                <img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=1200" class="gallery-img order-1 lg:order-2" alt="Grand Living Room">
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-16 items-center pt-4 md:pt-10 reveal-on-scroll">
+                <img src="https://images.unsplash.com/photo-155691220-e15b29be8c8f?auto=format&fit=crop&q=80&w=1200" class="gallery-img" alt="Bespoke Kitchen">
+                <div class="space-y-2 md:space-y-4">
+                    <h3 class="text-xl md:text-3xl font-bold accent-color">Bespoke Dining & Kitchen</h3>
+                    <p class="text-gray-400 font-light text-sm md:text-base">A sprawling open-concept culinary layout fully provisioned with specialized modern appliances, culinary utensils, and comprehensive premium presentation dining sets.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-16 items-center pt-4 md:pt-10 reveal-on-scroll">
+                <div class="space-y-2 md:space-y-4 order-2 lg:order-1">
+                    <h3 class="text-xl md:text-3xl font-bold accent-color">Deluxe Twin Bathrooms</h3>
+                    <p class="text-gray-400 font-light text-sm md:text-base">Two individual, beautifully built vanity bathrooms equipped with individual constant geysers, deep tiling details, and premium accents.</p>
+                </div>
+                <img src="https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?auto=format&w=1200" class="gallery-img order-1 lg:order-2" alt="Deluxe Bathroom">
+            </div>
+        </div>
+
+        <div class="mt-12 md:mt-16 text-center reveal-on-scroll">
+            <button onclick="showPage('contact')" class="bg-[#c2410c] hover:bg-[#a1340a] text-white px-10 md:px-12 py-4 rounded-full font-bold uppercase tracking-widest text-[10px] transition">Request This Suite</button>
+        </div>
+    </div>
+
+    <!-- AMENITIES COMPONENT SECTION -->
+    <div id="amenities-page" class="hidden-section page-container py-16 md:py-24 px-4 md:px-10 max-w-7xl mx-auto">
+        <div class="text-center mb-8 md:mb-12 reveal-on-scroll">
+            <h2 class="text-3xl md:text-7xl font-bold uppercase tracking-tighter">Bespoke Essentials</h2>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div class="amenity-card p-6 md:p-8 rounded-2xl md:rounded-3xl reveal-on-scroll"><span class="text-2xl md:text-3xl block mb-3 md:mb-4">🧺</span><h4 class="font-bold text-sm mb-2">Laundry Facilities</h4><p class="text-gray-400 text-[10px]">An in-house automatic washing machine is fully provided within your residence, offering maximum domestic independence and ease throughout your stay.</p></div>
+            <div class="amenity-card p-6 md:p-8 rounded-2xl md:rounded-3xl reveal-on-scroll"><span class="text-2xl md:text-3xl block mb-3 md:mb-4">🌐</span><h4 class="font-bold text-sm mb-2">High-Speed WiFi</h4><p class="text-gray-400 text-[10px]">High-speed digital pipeline infrastructure featuring multi-point routers to guarantee a stable, continuous, and secure online environment.</p></div>
+            <div class="amenity-card p-6 md:p-8 rounded-2xl md:rounded-3xl reveal-on-scroll"><span class="text-2xl md:text-3xl block mb-3 md:mb-4">🚕</span><h4 class="font-bold text-sm mb-2">Cab Facilities</h4><p class="text-gray-400 text-[10px]">Dedicated on-call private chauffeur and cab deployment arrangements available for seamless transit to business hubs or airport transfers.</p></div>
+            <div class="amenity-card p-6 md:p-8 rounded-2xl md:rounded-3xl reveal-on-scroll"><span class="text-2xl md:text-3xl block mb-3 md:mb-4">🛗</span><h4 class="font-bold text-sm mb-2">Elevator Access</h4><p class="text-gray-400 text-[10px]">Fully operational, high-capacity modern elevator access engineered for effortless luggage transit and universal mobility convenience.</p></div>
+            <div class="amenity-card p-6 md:p-8 rounded-2xl md:rounded-3xl reveal-on-scroll"><span class="text-2xl md:text-3xl block mb-3 md:mb-4">🍳</span><h4 class="font-bold text-sm mb-2">Equipped Kitchen</h4><p class="text-gray-400 text-[10px]">A dedicated culinary setup equipped with a professional cooking stove, specialized exhaust chimney, essential dining utensils, and a modern heating oven.</p></div>
+            <div class="amenity-card p-6 md:p-8 rounded-2xl md:rounded-3xl reveal-on-scroll"><span class="text-2xl md:text-3xl block mb-3 md:mb-4">🛡️</span><h4 class="font-bold text-sm mb-2">CCTV Surveillance</h4><p class="text-gray-400 text-[10px]">24/7 continuous high-definition digital perimeter monitoring and smart CCTV coverage protecting all common thoroughfares and structural entries.</p></div>
+            <div class="amenity-card p-6 md:p-8 rounded-2xl md:rounded-3xl reveal-on-scroll"><span class="text-2xl md:text-3xl block mb-3 md:mb-4">👮</span><h4 class="font-bold text-sm mb-2">Security Guard</h4><p class="text-gray-400 text-[10px]">Highly trained, professional on-site physical security personnel stationed permanently around the clock to manage visitor access control.</p></div>
+            <div class="amenity-card p-6 md:p-8 rounded-2xl md:rounded-3xl reveal-on-scroll"><span class="text-2xl md:text-3xl block mb-3 md:mb-4">🚿</span><h4 class="font-bold text-sm mb-2">Washroom with Geyser</h4><p class="text-gray-400 text-[10px]">Each suite features clean, contemporary bathrooms outfitted with reliable water-heating geysers to ensure a relaxing and comfortable freshening experience.</p></div>
+            <div class="amenity-card p-6 md:p-8 rounded-2xl md:rounded-3xl reveal-on-scroll"><span class="text-2xl md:text-3xl block mb-3 md:mb-4">📺</span><h4 class="font-bold text-sm mb-2">4K Smart TV</h4><p class="text-gray-400 text-[10px]">Sit back, relax, and enjoy watching your favorite global media, high-definition sports, and premium streaming channels on a large ultra-clear smart screen.</p></div>
+            <div class="amenity-card p-6 md:p-8 rounded-2xl md:rounded-3xl reveal-on-scroll"><span class="text-2xl md:text-3xl block mb-3 md:mb-4">⚡</span><h4 class="font-bold text-sm mb-2">24/7 Power Backup</h4><p class="text-gray-400 text-[10px]">Heavy-duty uninterrupted continuous electrical generator systems setup to guarantee a completely lag-free digital lifestyle and secure medical appliance stability.</p></div>
+        </div>
+    </div>
+
+    <!-- WHY US COMPONENT SECTION -->
+    <div id="why-us-page" class="hidden-section page-container py-16 md:py-24 px-4 md:px-16 max-w-7xl mx-auto">
+        <div class="flex flex-col items-center text-center mb-10 md:mb-16 reveal-on-scroll">
+            <span class="text-[10px] uppercase tracking-[0.5em] accent-color font-bold mb-3">Distinction in Detail</span>
+            <h2 class="text-3xl md:text-7xl font-bold uppercase tracking-tighter">Why Choose Us</h2>
+            <div class="w-16 h-0.5 bg-[#d4a373] mt-4 opacity-50"></div>
+        </div>
+        <div class="space-y-6 md:space-y-12">
+            <div class="glow-card p-6 md:p-14 rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 reveal-on-scroll flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-8">
+                <div class="space-y-3 md:space-y-4 max-w-2xl">
+                    <div class="text-xs font-semibold uppercase tracking-[0.3em] text-[#d4a373] flex items-center gap-2"><span class="font-mono text-base md:text-lg opacity-40">01 /</span> City Center Connectivity</div>
+                    <h4 class="text-xl md:text-4xl font-bold text-white tracking-tight">Strategic Hub Proximity</h4>
+                    <p class="text-gray-400 text-xs md:text-sm leading-relaxed font-light">Calculated directly on Old Airport Road, putting you in close connection to core corporate and lifestyle centers. Positioned within 2 minutes of Manipal Hospital and 3 minutes from Leela Palace, making crucial appointments and city travel stress-free.</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 md:px-6 md:py-4 text-center min-w-[140px] md:min-w-[160px] self-stretch md:self-auto flex flex-col justify-center">
+                    <span class="text-xl md:text-2xl font-bold accent-color block">2 MINS</span>
+                    <span class="text-[9px] uppercase tracking-wider text-gray-500 font-semibold">To Manipal Hosp.</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-8">
+                <div class="glow-card p-6 md:p-12 rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 reveal-on-scroll lg:col-span-3 flex flex-col justify-between space-y-6 md:space-y-8">
+                    <div class="space-y-3 md:space-y-4">
+                        <div class="text-xs font-semibold uppercase tracking-[0.3em] text-[#d4a373]"><span class="font-mono text-base md:text-lg opacity-40">02 /</span> Absolute Sanctuary</div>
+                        <h4 class="text-xl md:text-3xl font-bold text-white tracking-tight">Comprehensive Security Parameters</h4>
+                        <p class="text-gray-400 text-xs md:text-sm leading-relaxed font-light">Our infrastructure contains persistent 24/7 round-the-clock physical security guards stationed alongside continuous commercial CCTV surveillance parameters to protect what matters.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 md:gap-4 text-gray-500 text-[9px] md:text-[10px] uppercase tracking-widest border-t border-white/5 pt-4 md:pt-6"><span>• 24/7 Guards</span><span>• HD Monitoring</span><span>• Secure Entry</span></div>
+                </div>
+                <div class="glow-card p-6 md:p-12 rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 reveal-on-scroll lg:col-span-2 flex flex-col justify-between space-y-6 md:space-y-8">
+                    <div class="space-y-3 md:space-y-4">
+                        <div class="text-xs font-semibold uppercase tracking-[0.3em] text-[#d4a373]"><span class="font-mono text-base md:text-lg opacity-40">03 /</span> Elite Relaxation</div>
+                        <h4 class="text-xl md:text-3xl font-bold text-white tracking-tight">Residential Comfort</h4>
+                        <p class="text-gray-400 text-xs md:text-sm leading-relaxed font-light">Our curated interiors feature soundproof double-glazed window structures, anatomical custom luxury mattresses, and bright layouts optimized for recovery or remote workflows.</p>
+                    </div>
+                    <div class="text-left"><span class="inline-block border-b border-[#d4a373] pb-1 text-[#d4a373] text-[9px] uppercase tracking-widest font-bold">Uncompromising Ease</span></div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-8">
+                <div class="glow-card p-6 md:p-12 rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 reveal-on-scroll lg:col-span-2 flex flex-col justify-between space-y-6 md:space-y-8">
+                    <div class="space-y-3 md:space-y-4">
+                        <div class="text-xs font-semibold uppercase tracking-[0.3em] text-[#d4a373]"><span class="font-mono text-base md:text-lg opacity-40">04 /</span> Smart Ecosystem</div>
+                        <h4 class="text-xl md:text-3xl font-bold text-white tracking-tight">Modern Electronics</h4>
+                        <p class="text-gray-400 text-xs md:text-sm leading-relaxed font-light">Fully equipped with high-end digital automation pipelines, multi-zone heating geysers, 4K high-definition smart entertainment units, and continuous safety chimney configurations.</p>
+                    </div>
+                    <div class="text-left"><span class="text-gray-500 text-[9px] md:text-[10px] uppercase tracking-widest">Fully Integrated Ecosystem</span></div>
+                </div>
+                <div class="glow-card p-6 md:p-12 rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 reveal-on-scroll lg:col-span-3 flex flex-col justify-between space-y-6 md:space-y-8">
+                    <div class="space-y-3 md:space-y-4">
+                        <div class="text-xs font-semibold uppercase tracking-[0.3em] text-[#d4a373]"><span class="font-mono text-base md:text-lg opacity-40">05 /</span> Dual Philosophy</div>
+                        <h4 class="text-xl md:text-3xl font-bold text-white tracking-tight">Bespoke Concierge Hospitality</h4>
+                        <p class="text-gray-400 text-xs md:text-sm leading-relaxed font-light">Blends the unmatched privacy metrics of independent luxury real estate ownership directly with the dedicated care, support values, and responsiveness of elite hotel concierge protocols.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 md:gap-4 text-gray-500 text-[9px] md:text-[10px] uppercase tracking-widest border-t border-white/5 pt-4 md:pt-6"><span>• Complete Privacy</span><span>• Proactive Staff</span><span>• Bespoke Living</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOOKING CONTACT FORM SECTION -->
+    <div id="contact-page" class="hidden-section page-container py-16 md:py-24 px-4 md:px-10 max-w-5xl mx-auto">
+        <div class="bg-white/5 p-5 md:p-16 rounded-[1.5rem] md:rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-sm reveal-on-scroll">
+            <div class="text-center mb-6 md:mb-10"><h2 class="text-3xl md:text-6xl font-bold uppercase tracking-tighter">Book Your Stay</h2></div>
+            <form id="bookingForm" class="space-y-6 md:space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                    <input type="text" id="fullName" name="Full Name" required placeholder="Full Name" class="bg-transparent border-b border-white/10 py-3 outline-none text-white focus:border-[#d4a373] text-sm">
+                    <input type="email" id="emailAddress" name="_replyto" required placeholder="Email Address" class="bg-transparent border-b border-white/10 py-3 outline-none text-white focus:border-[#d4a373] text-sm">
+                </div>
+                <div class="w-full"><input type="tel" id="phoneNumber" name="Phone Number" required class="w-full bg-transparent border-b border-white/10 py-3 outline-none text-white focus:border-[#d4a373] text-sm"></div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8">
+                    <div class="flex flex-col space-y-1"><label class="text-[10px] text-gray-400 uppercase tracking-wider">Check-In</label><input type="date" id="checkIn" name="Check-In" required class="bg-transparent border-b border-white/10 py-2 text-white outline-none focus:border-[#d4a373] text-sm"></div>
+                    <div class="flex flex-col space-y-1"><label class="text-[10px] text-gray-400 uppercase tracking-wider">Check-Out</label><input type="date" id="checkOut" name="Check-Out" required class="bg-transparent border-b border-white/10 py-2 text-white outline-none focus:border-[#d4a373] text-sm"></div>
+                    <div class="flex flex-col space-y-1"><label class="text-[10px] text-gray-400 uppercase tracking-wider">Suite Type</label><select name="Suite Type" id="suiteSelector" class="bg-transparent border-b border-white/10 py-2 text-white outline-none focus:border-[#d4a373] text-sm"><option value="1BHK">1 BHK Suite</option><option value="2BHK">2 BHK Suite</option></select></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 pt-2">
+                    <input type="number" id="guestCount" name="Total Guests" min="1" max="6" placeholder="Number of Guests" class="bg-transparent border-b border-white/10 py-3 outline-none text-white focus:border-[#d4a373] text-sm">
+                    <textarea id="specialRequests" name="Special Requests" placeholder="Medical or accessibility assistance requests (Optional)" class="bg-transparent border-b border-white/10 py-3 outline-none text-white focus:border-[#d4a373] h-12 resize-none text-sm"></textarea>
+                </div>
+                <div class="text-center pt-4 md:pt-6"><button type="submit" class="bg-[#c2410c] hover:bg-[#a1340a] text-white px-10 py-4 md:py-5 rounded-full font-bold uppercase text-[10px] w-full md:w-auto transition"><span id="btnText">Request Availability</span></button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- GEOLOCATION MAP SECTION -->
+    <section class="py-12 md:py-16 px-4 md:px-20 max-w-7xl mx-auto reveal-on-scroll">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 items-center">
+            <div class="space-y-4 md:space-y-6 order-2 lg:order-1">
+                <h2 class="text-3xl md:text-6xl font-bold leading-tight">Convenient <br> Access.</h2>
+                <div class="space-y-3 border-t border-white/10 pt-4 md:pt-6 text-xs md:text-sm">
+                    <div class="flex justify-between"><span>Manipal Hospital</span><span class="accent-color">2 MINS</span></div>
+                    <div class="flex justify-between"><span>Leela Palace</span><span class="accent-color">3 MINS</span></div>
+                    <div class="flex justify-between"><span>Embassy GolfLinks (EGL)</span><span class="accent-color">5 MINS</span></div>
+                    <div class="flex justify-between"><span>Indiranagar Hub</span><span class="accent-color">8 MINS</span></div>
+                    <div class="flex justify-between"><span>Indiranagar Metro Station</span><span class="accent-color">10 MINS</span></div>
+                    <div class="flex justify-between"><span>Bagmane Tech Park</span><span class="accent-color">12 MINS</span></div>
+                    <div class="flex justify-between"><span>MG Road</span><span class="accent-color">15 MINS</span></div>
+                </div>
+                <a href="https://maps.google.com" target="_blank" class="inline-block border-b border-[#d4a373] pb-1 text-[#d4a373] text-[10px] uppercase font-bold mt-2">Get Directions</a>
+            </div>
+            <div class="h-[260px] md:h-[300px] w-full rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border border-white/10 order-1 lg:order-2"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3888.1326463!2d77.6397394!3d12.9633519!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae1410353555b5%3A0x777559173592ccaf!2sManipal+Hospital+Old+Airport+Road!5e0!3m2!1sen!2sin!4v1680000000000!5m2!1sen!2sin" class="w-full h-full grayscale opacity-70 border-0"></iframe></div>
+        </div>
+    </section>
+
+    <!-- INFORMATION FOOTER BRANDING -->
+    <section class="py-12 md:py-16 px-4 md:px-20 border-t border-white/5 bg-[#0a100f]">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 text-center md:text-left">
+            <div class="space-y-2 md:space-y-4"><span class="text-white font-bold tracking-widest text-lg font-[Playfair Display] opacity-90 block">SAI LUX</span><p class="text-gray-500 text-[10px] max-w-xs mx-auto md:mx-0">Redefining urban stays in Bangalore.</p></div>
+            <div class="space-y-2 md:space-y-4"><h4 class="text-[#d4a373] uppercase tracking-widest text-[10px] font-bold">Get In Touch</h4><a href="tel:+919663824433" class="block text-base font-light text-white hover:text-[#d4a373] transition">+91 96638 24433</a><a href="mailto:sailuxsunriseliving@gmail.com" class="block text-xs md:text-sm font-light text-white hover:text-[#d4a373] transition break-all">sailuxsunriseliving@gmail.com</a></div>
+            <div class="space-y-2 md:space-y-4"><h4 class="text-[#d4a373] uppercase tracking-widest text-[10px] font-bold">Location</h4><p class="text-gray-400 font-light text-xs md:text-sm">Old Airport Road, Near Manipal Hospital,<br>Bengaluru 560008</p></div>
+        </div>
+    </section>
+
+    <!-- ACTION SUCCESS POPUP FRAME -->
+    <div id="successPopup" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 invisible opacity-0 transition-all duration-500 p-4">
+        <div class="lux-card p-6 md:p-10 rounded-[1.5rem] md:rounded-[2rem] text-center shadow-2xl w-full max-w-md">
+            <h3 class="text-xl md:text-2xl font-bold mb-3 md:mb-4 uppercase tracking-widest text-white">THANK YOU</h3>
+            <p class="text-gray-300 mb-6 md:mb-8 text-xs md:text-sm">Your request has been received.<br>Our team will call you about the confirmation.<br><span class="block mt-4 opacity-60 uppercase text-[10px] tracking-widest">Call us:</span><strong class="text-base md:text-lg text-[#d4a373]">+91 9663824433</strong></p>
+            <p class="text-[9px] md:text-[10px] text-gray-500 mt-2 tracking-wide font-light">Bengaluru, India</p>
+            <button onclick="closePopup()" class="border border-[#d4a373] text-[#d4a373] px-8 py-3 rounded-full text-[10px] font-bold uppercase hover:bg-[#d4a373] hover:text-white transition-all duration-300 mt-3 w-full sm:w-auto">Dismiss</button>
+        </div>
+    </div>
+
+    <!-- UTILITY FOOTER -->
+    <footer class="bg-black text-white py-8 md:py-10 text-center border-t border-white/5 px-4"><span class="text-[8px] tracking-[0.4em] uppercase text-gray-600">© 2026 Lux Sunrise Living.</span></footer>
+
+    <!-- FLOATING WHATSAPP INTERACTION CORD -->
+    <a href="https://wa.me/919663824433" target="_blank" class="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[60] bg-[#25D366] p-3 md:p-4 rounded-full shadow-2xl flex items-center justify-center transform active:scale-95 transition-transform"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.316 1.592 5.43 0 9.856-4.426 9.858-9.855.002-5.43-4.425-9.856-9.856-9.856-5.43 0-9.856 4.426-9.858 9.856-.001 1.938.529 3.754 1.567 5.346l-1.007 3.682 3.824-.963-.094-.055zm11.367-5.115c-.285-.143-1.688-.833-1.947-.928-.26-.095-.45-.143-.64.142-.19.285-.736.928-.903 1.12-.167.19-.334.214-.619.071-.285-.143-1.204-.444-2.293-1.415-.848-.756-1.42-1.689-1.586-1.974-.167-.285-.018-.439.124-.581.128-.127.285-.333.428-.5.143-.167.19-.285.285-.476.095-.19.048-.357-.024-.5-.071-.143-.64-1.545-.877-2.117-.23-.556-.465-.48-.64-.48-.164-.002-.354-.003-.544-.003-.19 0-.5.071-.76.357-.26.285-1 1-1 2.428s1.024 2.809 1.167 3.023c.143.214 2.015 3.078 4.881 4.321.682.296 1.214.473 1.629.605.684.217 1.307.187 1.8.113.55-.082 1.688-.69 1.926-1.356.238-.667.238-1.238.167-1.356-.07-.119-.262-.19-.547-.333z"/></svg></a>
+
+    <!-- SYSTEM CORE JAVASCRIPT ARCHITECTURE -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.classList.remove('opacity-0');
+        });
+
+        // Sunrise Dissolve Lifecycle Execution Sequence
+        window.addEventListener('load', () => {
+            const preloader = document.getElementById('sunrise-preloader');
+            setTimeout(() => {
+                preloader.style.opacity = '0';
+                preloader.style.filter = 'blur(12px)';
+                setTimeout(() => { 
+                    preloader.style.display = 'none'; 
+                    triggerScrollAnimations(); 
+                }, 800);
+            }, 2600);
+        });
+
+        const phoneInputField = document.querySelector("#phoneNumber");
+        const phoneInput = window.intlTelInput(phoneInputField, { separateDialCode: true, initialCountry: "in" });
+
+        function toggleMobileMenu() { 
+            const menu = document.getElementById('mobile-menu');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
+                document.body.style.overflow = 'hidden'; // Protect from background scroll scrolling away
+            } else {
+                menu.classList.add('hidden');
+                menu.classList.remove('flex');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function toggleMobileSubmenu() {
+            const submenu = document.getElementById('mobile-submenu');
+            const arrow = document.getElementById('submenu-arrow');
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden'); submenu.classList.add('flex');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden'); submenu.classList.remove('flex');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function showPage(pageId) {
+            const sections = ['home-page', 'suites-page', 'amenities-page', 'why-us-page', 'contact-page'];
+            sections.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.classList.add('hidden-section'); el.classList.remove('active-section'); }
+            });
+            const active = document.getElementById(pageId + '-page');
+            if (active) { active.classList.remove('hidden-section'); active.classList.add('active-section'); }
+            document.body.style.overflow = ''; // Release lock if changed from mobile menu
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(triggerScrollAnimations, 50);
+        }
+
+        function showSuite(type) {
+            showPage('suites');
+            document.getElementById('display-1bhk').classList.add('hidden');
+            document.getElementById('display-2bhk').classList.add('hidden');
+            const element = document.getElementById('display-' + type);
+            if(element) element.classList.remove('hidden');
+            const selector = document.getElementById('suiteSelector');
+            if(selector) selector.value = type.toUpperCase();
+        }
+
+        function closePopup() { 
+            const popup = document.getElementById('successPopup'); 
+            popup.classList.add('opacity-0'); 
+            setTimeout(() => popup.classList.add('invisible'), 500); 
+        }
+
+        function startRazorpayPayment() {
+            var options = { 
+                "key": "rzp_test_YOUR_KEY_HERE", 
+                "amount": 500000, 
+                "currency": "INR", 
+                "name": "SAI LUX", 
+                "description": "Advance Booking Payment", 
+                "image": "https://images.unsplash.com/photo-1590644365607-1c5a519a7a37?auto=format&fit=crop&q=80&w=200", 
+                "handler": function (response){ 
+                    alert("Payment Successful! ID: " + response.razorpay_payment_id); 
+                    const popup = document.getElementById('successPopup'); 
+                    if(popup) { popup.classList.remove('invisible'); setTimeout(() => popup.classList.add('opacity-100'), 10); } 
+                }, 
+                "theme": { "color": "#0f1715" } 
+            };
+            var rzp1 = new Razorpay(options); rzp1.open();
+        }
+
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btnText = document.getElementById('btnText'); 
+            if(btnText) btnText.innerText = "SENDING...";
+            
+            const capturedFullPhone = phoneInput.getNumber();
+            const rawTemplateText = `New Booking Request - Sai Lux\n\nGuest Name: ${document.getElementById('fullName').value}\nEmail: ${document.getElementById('emailAddress').value}\nPhone: ${capturedFullPhone}\nSuite: ${document.getElementById('suiteSelector').value}\nCheck-In: ${document.getElementById('checkIn').value}\nCheck-Out: ${document.getElementById('checkOut').value}`;
+            
+            window.open(`https://wa.me/919663824433?text=${encodeURIComponent(rawTemplateText)}`, '_blank');
+            
+            const popup = document.getElementById('successPopup'); 
+            if(popup) { popup.classList.remove('invisible'); setTimeout(() => popup.classList.add('opacity-100'), 10); }
+            
+            if(btnText) btnText.innerText = "Request Availability"; 
+            this.reset();
+        });
+
+        function triggerScrollAnimations() {
+            const observer = new IntersectionObserver((entries) => { 
+                entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-visible'); } }); 
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.reveal-on-scroll').forEach(element => { observer.observe(element); });
+        }
+        window.addEventListener('DOMContentLoaded', triggerScrollAnimations);
+
+        // Core Mouse Interaction Pipeline
+        document.addEventListener('mousemove', (e) => {
+            const activeCards = document.querySelectorAll('.amenity-card, .glow-card');
+            activeCards.forEach(card => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+            });
+        });
+    </script>
+</body>
+</html>
